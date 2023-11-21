@@ -1,12 +1,14 @@
 from django.db import models
 from django.utils.timezone import now
 
+from users.models import User
+
 
 class Course(models.Model):
     title = models.CharField(max_length=150, verbose_name='название')
     photo = models.ImageField(upload_to='photo/', blank=True, null=True, verbose_name='превью')
     description = models.TextField(verbose_name='описание')
-    user = models.ForeignKey('users.User', on_delete=models.CASCADE, blank=True, null=True, verbose_name='user')
+    owner = models.ForeignKey('users.User', on_delete=models.CASCADE, blank=True, null=True, verbose_name='владелец')
 
     def __str__(self):
         return self.title
@@ -22,7 +24,7 @@ class Lesson(models.Model):
     photo = models.ImageField(upload_to='photo/', blank=True, null=True, verbose_name='превью')
     video_link = models.URLField(blank=True, null=True, verbose_name='видео')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, blank=True, null=True, verbose_name='курс')
-    user = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='user', blank=True, null=True)
+    owner = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='владелец', blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -38,7 +40,7 @@ class Payment(models.Model):
         ('transfer', 'перевод')
     )
 
-    user = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='пользователь',blank=True, null=True)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='пользователь', blank=True, null=True)
     date_payment = models.DateField(default=now)
     paid_course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='курс', blank=True, null=True)
     paid_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, verbose_name='урок', blank=True, null=True)
