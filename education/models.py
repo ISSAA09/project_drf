@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.utils.timezone import now
 
 from users.models import User
@@ -22,7 +23,7 @@ class Lesson(models.Model):
     title = models.CharField(max_length=150, verbose_name='название')
     description = models.TextField(verbose_name='описание')
     photo = models.ImageField(upload_to='photo/', blank=True, null=True, verbose_name='превью')
-    video_link = models.URLField(blank=True, null=True, verbose_name='видео')
+    video_link = models.CharField(max_length=150, blank=True, null=True, verbose_name='видео')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, blank=True, null=True, verbose_name='курс')
     owner = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='владелец', blank=True, null=True)
 
@@ -53,3 +54,18 @@ class Payment(models.Model):
     class Meta:
         verbose_name = 'платеж'
         verbose_name_plural = 'платежи'
+
+
+class Subscriber(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='пользователь', blank=True, null=True)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='курс')
+    start_date = models.DateTimeField(verbose_name='дата подписки', default=timezone.now)
+    is_active_subscription = models.BooleanField(verbose_name='статус', default=True)
+    email = models.EmailField(verbose_name='почта', blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.user}{self.course}'
+
+    class Meta:
+        verbose_name = 'Подписчик'
+        verbose_name_plural = 'Подписчики'
