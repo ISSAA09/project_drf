@@ -1,5 +1,7 @@
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from education.models import Course, Lesson, Payment, Subscriber
 from education.paginators import CoursesPaginator
@@ -8,6 +10,7 @@ from education.serializers import CourseSerializer, LessonSerializer, PaymentSer
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
+from education.services import create_payment, retrieve_payment
 from users.models import UserRole
 from users.permissions import IsOwner, IsModerator, IsSubscriber, IsMember
 
@@ -66,17 +69,35 @@ class LessonDestroyAPIView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated, IsOwner]
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
-    serializer_class = PaymentSerializer
-    queryset = Payment.objects.all()
-
-
 class PaymentListAPIView(generics.ListAPIView):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ('paid_course', 'paid_lesson', 'payment_type')
     ordering_fields = ('date_payment',)
+
+
+class GetPaymentView(APIView):
+
+    def get(self, request, payment_id):
+        payment_retrieve = retrieve_payment(payment_id)
+        return Response({
+            'payment_retrieve': payment_retrieve,
+            'status': payment_retrieve.status,
+        })
+
+
+class PaymentCreateAPIView(generics.CreateAPIView):
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+
+    def perform_create(self, serializer):
+        payment = serializer.save()
+        pay = create_payment(payment.payment_amount)
+        payment.stripe_payment_id = pay['id']
+        pay.save()
+        payment.save()
+        return super().perform_create(serializer)
 
 
 class SubscriberCreateAPIView(generics.CreateAPIView):

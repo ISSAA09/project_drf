@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 from django.utils import timezone
 from django.utils.timezone import now
@@ -40,9 +42,9 @@ class Payment(models.Model):
         ('cash', 'наличные'),
         ('transfer', 'перевод')
     )
-
+    stripe_payment_id = models.CharField(unique=True, verbose_name='платеж', max_length=150, null=True)
     user = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='пользователь', blank=True, null=True)
-    date_payment = models.DateField(default=now)
+    date_payment = models.DateTimeField(default=now)
     paid_course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='курс', blank=True, null=True)
     paid_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, verbose_name='урок', blank=True, null=True)
     payment_amount = models.PositiveIntegerField(verbose_name='сумма оплаты')
