@@ -11,6 +11,7 @@ from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 from education.services import create_payment, retrieve_payment
+from education.tasks import send_mail_notification
 from users.models import UserRole
 from users.permissions import IsOwner, IsModerator, IsSubscriber, IsMember
 
@@ -25,7 +26,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             permission_classes = [IsAuthenticated, IsModerator]
         elif self.action == 'list' or self.action == 'retrieve':
             permission_classes = [IsAuthenticated, IsModerator | IsOwner | IsSubscriber]
-        elif self.action == 'update' or self.action == 'destroy':
+        elif self.action == 'update' or self.action == 'destroy' or self.action == 'partial_update':
             permission_classes = [IsAuthenticated, IsOwner]
         return [permission() for permission in permission_classes]
 
@@ -33,6 +34,14 @@ class CourseViewSet(viewsets.ModelViewSet):
         course = serializer.save()
         course.owner = self.request.user
         course.save()
+
+    def perform_update(self, serializer):
+        updated_course = serializer.save()
+
+        course_name = Course.objects.get(pk=updated_course.pk).title
+        sub = Subscriber.objects.values("email").filter(course_id=updated_course.pk)
+        for email in sub:
+            send_mail_notification.delay(email['email'], course_name)
 
 
 class LessonCreateAPIView(generics.CreateAPIView):
@@ -107,6 +116,7 @@ class SubscriberCreateAPIView(generics.CreateAPIView):
     def perform_create(self, serializer):
         new_subscription = serializer.save()
         new_subscription.user = self.request.user
+        new_subscription.email = self.request.user.email
         new_subscription.save()
 
 

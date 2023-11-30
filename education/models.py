@@ -66,7 +66,7 @@ class Subscriber(models.Model):
     email = models.EmailField(verbose_name='почта', blank=True, null=True)
 
     def __str__(self):
-        return f'{self.user}{self.course}'
+        return f'{self.user} {self.course} '
 
     class Meta:
         verbose_name = 'Подписчик'
