@@ -23,7 +23,7 @@ def retrieve_payment(stripe_id):
     )
 
 
-def set_schedule(*args,**kwargs):
+def set_schedule(*args, **kwargs):
     schedule, created = IntervalSchedule.objects.get_or_create(
         every=10,
         period=IntervalSchedule.SECONDS,
